@@ -91,6 +91,7 @@ $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $upn = Get-AnsibleParam -obj $params -name "upn" -type "str"
 $sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -type "str"
 $change_password_at_logon = Get-AnsibleParam -obj $params -name "change_password_at_logon" -type "bool"
+$password_resets_on = Get-AnsibleParam -obj $params -name "password_resets_on" -type "str"
 
 # User informational parameters
 $user_info = @{
@@ -185,6 +186,10 @@ If ($state -eq 'present') {
         # For new_users there is also no difference between always and when_changed
         # so we don't need to differentiate between this two states.
         If ($new_user -or ($update_password -eq "always")) {
+            $set_new_credentials = $true
+        } elseif ($null -ne $password_resets_on -and $null -ne $user_obj.PasswordLastSet `
+               -and (Get-Date) -ge (Get-Date $password_resets_on) `
+               -and $user_obj.PasswordLastSet -le (Get-Date $password_resets_on)) {
             $set_new_credentials = $true
         } elseif ($update_password -eq "when_changed") {
             $user_identifier = If ($user_obj.UserPrincipalName) {
