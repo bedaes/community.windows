@@ -90,6 +90,7 @@ $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $upn = Get-AnsibleParam -obj $params -name "upn" -type "str"
 $sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -type "str"
+$change_password_at_logon = Get-AnsibleParam -obj $params -name "change_password_at_logon" -type "bool"
 
 # User informational parameters
 $user_info = @{
@@ -200,6 +201,9 @@ If ($state -eq 'present') {
         If ($set_new_credentials) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
             Set-ADAccountPassword -Identity $user_guid -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
+            if ($change_password_at_logon) {
+                Set-ADUser -Identity $user_guid -ChangePasswordAtLogon 1
+            }
             $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
             $result.password_updated = $true
             $result.changed = $true
